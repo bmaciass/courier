@@ -1,0 +1,24 @@
+{
+  "name": "@courier/schema",
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [],
+  "author": "Bryan Macias",
+  "license": "ISC",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20231218.0",
+    "@types/node": "^20",
+    "prisma": "^5.10.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@pothos/core": "^3.41.0",
+    "@pothos/plugin-prisma": "^3.65.0",
+    "@pothos/plugin-scope-auth": "^3.21.1",
+    "@prisma/client": "5.10.2",
+    "@prisma/extension-accelerate": "^1.0.0",
+    "graphql": "^16.8.1"
+  }
+}

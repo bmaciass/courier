@@ -1,0 +1,325 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+generator pothos {
+  provider = "prisma-pothos-types"
+  output   = "./generated/pothos-types.ts"
+}
+
+enum OperatorRole {
+  admin
+  receiver
+  dispatcher
+  deliverer
+}
+
+enum Usertype {
+  client
+  operator
+}
+
+enum PackageLocation {
+  in_warehouse
+  in_transit
+  in_customs
+  in_branch
+  in_route
+}
+
+enum PackageStatus {
+  received
+  delivered
+  action_required
+  error
+}
+
+enum InvoiceStatus {
+  created
+  sent
+  void
+}
+
+enum InvoiceLineType {
+  item
+  package
+  subtotal
+  discount
+  tax
+  summary
+}
+
+enum JournalDirection {
+  debit
+  credit
+}
+
+enum JournalTransaction {
+  invoice
+  payment
+  reversal
+}
+
+model Organization {
+  id     Int     @id @default(autoincrement())
+  uid    String  @unique
+  name   String
+  active Boolean @default(true)
+}
+
+model Client {
+  id     Int     @unique
+  person Person  @relation(fields: [id], references: [id])
+  uid    String  @unique
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Package        Package[]
+  OrderPackage   OrderPackage[]
+  Payment        Payment[]
+  Journal        Journal[]
+  ClientItemRate ClientItemRate[]
+}
+
+model Operator {
+  id       Int          @unique
+  person   Person       @relation(fields: [id], references: [id])
+  uid      String       @unique
+  roleName OperatorRole
+  active   Boolean      @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Package Package[]
+}
+
+model Person {
+  id             Int    @id @default(autoincrement())
+  firstName      String
+  lastName       String
+  identityNumber String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  User              User[]
+  Client            Client[]
+  Operator          Operator[]
+  PersonEmail       PersonEmail[]
+  PersonPhoneNumber PersonPhoneNumber[]
+}
+
+model PersonEmail {
+  id    Int    @id @default(autoincrement())
+  email String
+
+  personId Int
+  person   Person @relation(fields: [personId], references: [id])
+}
+
+model PersonPhoneNumber {
+  id          Int    @id @default(autoincrement())
+  phoneNumber String
+
+  personId Int
+  person   Person @relation(fields: [personId], references: [id])
+}
+
+model User {
+  id   Int      @id @default(autoincrement())
+  name String   @unique
+  type Usertype
+
+  personId Int
+  person   Person @relation(fields: [personId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Item {
+  id   Int    @id @default(autoincrement())
+  uid  String @unique
+  name String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ItemRate    ItemRate[]
+  InvoiceLine InvoiceLine[]
+}
+
+model ItemRate {
+  id        Int       @id @default(autoincrement())
+  uid       String    @unique
+  min       Decimal
+  max       Decimal?
+  amount    Decimal
+  validFrom DateTime
+  validTo   DateTime?
+
+  itemId Int
+  item   Item @relation(fields: [itemId], references: [id])
+
+  ClientItemRate ClientItemRate[]
+}
+
+model ClientItemRate {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  rateId   Int      @unique
+  Rate     ItemRate @relation(fields: [rateId], references: [id])
+  clientId Int
+  client   Client   @relation(fields: [clientId], references: [id])
+}
+
+model Package {
+  id           Int             @id @default(autoincrement())
+  uid          String          @unique
+  name         String
+  serialNumber String?
+  weight       Decimal
+  price        Decimal
+  status       PackageStatus
+  location     PackageLocation
+
+  clientId   Int
+  client     Client   @relation(fields: [clientId], references: [id])
+  receiverId Int
+  receiver   Operator @relation(fields: [receiverId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  OrderPackage OrderPackage[]
+}
+
+model Order {
+  id  Int    @id @default(autoincrement())
+  uid String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  OrderPackage OrderPackage[]
+}
+
+model OrderPackage {
+  id Int @id @default(autoincrement())
+
+  weightRateId Int
+  weightRate   WeightRate @relation(fields: [weightRateId], references: [id])
+
+  clientId  Int
+  client    Client  @relation(fields: [clientId], references: [id])
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  packageId Int
+  package   Package @relation(fields: [packageId], references: [id])
+
+  InvoiceLine InvoiceLine[]
+}
+
+model Journal {
+  id          Int                @id @default(autoincrement())
+  date        DateTime
+  direction   JournalDirection
+  transaction JournalTransaction
+  amount      Decimal
+
+  clientId Int
+  client   Client @relation(fields: [clientId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  PaymentJournal PaymentJournal[]
+  InvoiceJournal InvoiceJournal[]
+}
+
+model Payment {
+  id     Int     @id @default(autoincrement())
+  amount Decimal
+
+  clientId Int
+  client   Client @relation(fields: [clientId], references: [id])
+
+  PaymentJournal PaymentJournal[]
+}
+
+model PaymentJournal {
+  id Int @id @default(autoincrement())
+
+  journalId Int
+  journal   Journal @relation(fields: [journalId], references: [id])
+  paymentId Int
+  payment   Payment @relation(fields: [paymentId], references: [id])
+}
+
+model Invoice {
+  id        Int           @id @default(autoincrement())
+  status    InvoiceStatus
+  email     String
+  statement String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  InvoiceLine    InvoiceLine[]
+  InvoiceJournal InvoiceJournal[]
+}
+
+model InvoiceJournal {
+  id Int @id @default(autoincrement())
+
+  invoiceId Int
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+  journalId Int
+  journal   Journal @relation(fields: [journalId], references: [id])
+}
+
+model InvoiceLine {
+  id         Int             @id @default(autoincrement())
+  uid        String          @unique
+  lineNumber Int
+  type       InvoiceLineType
+  quantity   Decimal?
+  amount     Decimal?
+
+  itemId         Int
+  Item           Item          @relation(fields: [itemId], references: [id])
+  invoiceId      Int
+  invoice        Invoice       @relation(fields: [invoiceId], references: [id])
+  orderPackageId Int?
+  orderPackage   OrderPackage? @relation(fields: [orderPackageId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WeightRate {
+  id        Int       @id @default(autoincrement())
+  uid       String    @unique
+  name      String
+  minWeight Decimal
+  maxWeight Decimal?
+  rate      Decimal
+  validFrom DateTime
+  validTo   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  OrderPackage OrderPackage[]
+}

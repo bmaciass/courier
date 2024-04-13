@@ -1,0 +1,34 @@
+{
+  "name": "@courier/api",
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [],
+  "author": "Bryan Macias",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "5.10.2",
+    "graphql": "^16.8.1",
+    "graphql-scalars": "^1.22.4",
+    "graphql-yoga": "^5.1.1",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@apollo/server": "^4.10.0",
+    "@cloudflare/workers-types": "^4.20231218.0",
+    "@swc/core": "^1.3.102",
+    "@types/lodash": "^4.14.202",
+    "@types/node": "^20",
+    "nodemon": "^3.0.2",
+    "tsconfig-paths": "^4.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5",
+    "wrangler": "3.32.0"
+  },
+  "scripts": {
+    "start:dev": "NODE_ENV=local nodemon src/apollo/server.local.ts",
+    "start:wrangler": "npx wrangler dev -c src/apollo/wrangler.toml",
+    "deploy:sandbox": "npx wrangler deploy -c src/apollo/wrangler.toml",
+    "deploy:production": "npx wrangler deploy --env production -c src/apollo/wrangler.toml"
+  }
+}

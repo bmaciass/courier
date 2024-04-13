@@ -1,0 +1,1 @@
+export const GRAPHQL_SCHEMA = 'http://localhost:5002'

@@ -1,0 +1,15 @@
+version: '3.3'
+services:
+  pg:
+    image: postgres:13-alpine
+    restart: always
+    ports:
+      - "5001:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: courier
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata: {}
